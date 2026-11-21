@@ -1,0 +1,10 @@
+node_modules
+dist
+.env
+.env.*
+data
+.circle
+recovery_file*
+*.log
+traces.jsonl
+console.jsonl

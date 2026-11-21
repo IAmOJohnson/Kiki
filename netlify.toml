@@ -1,0 +1,13 @@
+[build]
+  command = "bun install && bun run build"
+  publish = "dist"
+
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"
+
+# Anything that is not the API falls back to the single-page app, so /admin and /s/<id> open directly.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
