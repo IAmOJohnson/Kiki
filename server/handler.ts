@@ -290,6 +290,14 @@ async function route(store: Store, req: Request): Promise<Response> {
       await writeJsonFile(store, 'surprises', `${record.id}.json`, record)
       return json(201, record)
     }
+    if (id && parts[2] === 'regenerate' && method === 'POST') {
+      // Same content under a brand-new link. The old link and QR code stop working.
+      const existing = await getRecord(store, id)
+      const record: SurpriseRecord = { ...existing, id: newId(), updatedAt: Date.now() }
+      await writeJsonFile(store, 'surprises', `${record.id}.json`, record)
+      await store.del('surprises', `${id}.json`)
+      return json(200, record)
+    }
     if (id && method === 'PUT') {
       const existing = await getRecord(store, id)
       const body = await readJson(req)

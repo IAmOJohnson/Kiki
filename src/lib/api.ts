@@ -64,6 +64,8 @@ export const createSurprise = (title: string, settings: Settings) =>
   request<SurpriseRecord>('/surprises', json('POST', { title, settings }), true)
 export const updateSurprise = (id: string, title: string, settings: Settings) =>
   request<SurpriseRecord>(`/surprises/${encodeURIComponent(id)}`, json('PUT', { title, settings }), true)
+export const regenerateSurprise = (id: string) =>
+  request<SurpriseRecord>(`/surprises/${encodeURIComponent(id)}/regenerate`, { method: 'POST' }, true)
 export const deleteSurprise = (id: string) =>
   request<{ ok: true }>(`/surprises/${encodeURIComponent(id)}`, { method: 'DELETE' }, true)
 

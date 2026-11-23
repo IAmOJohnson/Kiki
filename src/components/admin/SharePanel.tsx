@@ -1,11 +1,22 @@
 import { useEffect, useState } from 'react'
 import QRCode from 'qrcode'
-import { Check, Download, ExternalLink, Link2 } from 'lucide-react'
+import { Check, Download, ExternalLink, Link2, RefreshCw } from 'lucide-react'
 import { toast } from 'sonner'
 import { buildShareLink } from '@/lib/share'
 
 /** Link and QR code for a saved surprise. The recipient opens it and sees the finished experience. */
-export function SharePanel({ id, title }: { id: string; title: string }) {
+interface Props {
+  id: string
+  title: string
+  /** Makes a new link for the same surprise. Rejects if it fails. */
+  onRegenerate: () => Promise<void>
+  /** False while there are unsaved edits. */
+  canRegenerate: boolean
+}
+
+export function SharePanel({ id, title, onRegenerate, canRegenerate }: Props) {
+  const [confirming, setConfirming] = useState(false)
+  const [regenerating, setRegenerating] = useState(false)
   const [link, setLink] = useState<string>()
   const [qr, setQr] = useState<string>()
   const [copied, setCopied] = useState(false)
@@ -31,6 +42,20 @@ export function SharePanel({ id, title }: { id: string; title: string }) {
       setTimeout(() => setCopied(false), 1800)
     } catch {
       toast.error('Could not copy the link.')
+    }
+  }
+
+  const regenerate = async () => {
+    setRegenerating(true)
+    try {
+      await onRegenerate()
+      setConfirming(false)
+      setLink(undefined)
+      setQr(undefined)
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Could not make a new link.')
+    } finally {
+      setRegenerating(false)
     }
   }
 
@@ -64,6 +89,26 @@ export function SharePanel({ id, title }: { id: string; title: string }) {
               </button>
             )}
           </div>
+          {confirming ? (
+            <div className="mt-3 rounded-2xl p-3" style={{ background: 'var(--surface-muted)' }} role="alert">
+              <p className="text-sm text-pretty">
+                Make a new link? The current link and QR code stop working. Your photos, music and text stay exactly as they are.
+              </p>
+              <div className="mt-2 flex gap-2">
+                <button type="button" className="chip flex-1 !px-3 text-sm" onClick={() => void regenerate()} disabled={regenerating}>
+                  {regenerating ? 'Making...' : 'Make new link'}
+                </button>
+                <button type="button" className="chip flex-1 !px-3 text-sm" onClick={() => setConfirming(false)} disabled={regenerating}>
+                  Keep current
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button type="button" className="chip mt-3 flex w-full items-center justify-center gap-2" onClick={() => setConfirming(true)} disabled={!canRegenerate || !link}>
+              <RefreshCw size={16} /> Regenerate link
+            </button>
+          )}
+          {!canRegenerate && <p className="mt-1 text-xs" style={{ color: 'var(--subtle)' }}>Save your changes first to make a new link.</p>}
           {link && (
             <a className="mt-3 inline-flex min-h-11 items-center gap-2 text-sm font-semibold underline" href={link} target="_blank" rel="noopener noreferrer">
               <ExternalLink size={14} /> Open as the recipient

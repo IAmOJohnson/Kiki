@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { ArrowLeft, Eye, Save, X } from 'lucide-react'
 import { toast } from 'sonner'
-import { createSurprise, fetchSurprise, updateSurprise } from '@/lib/api'
+import { createSurprise, fetchSurprise, regenerateSurprise, updateSurprise } from '@/lib/api'
 import { DEFAULTS, THEMES, type Settings, type SurprisePage, type ThemeId } from '@/lib/surprise'
 import { Surprise } from '@/components/surprise/Surprise'
 import { MusicField } from './MusicField'
@@ -100,6 +100,18 @@ export function SurpriseEditor({ id, onBack, onExpired }: Props) {
     }
   }
 
+  const regenerate = async () => {
+    if (!savedId) return
+    try {
+      const record = await regenerateSurprise(savedId)
+      setSavedId(record.id)
+      toast.success('New link ready. The old link no longer works.')
+    } catch (err) {
+      fail(err, 'Could not make a new link.')
+      throw err
+    }
+  }
+
   if (loading) return <p className="p-8 text-sm" style={{ color: 'var(--muted)' }}>Loading...</p>
 
   return (
@@ -170,7 +182,7 @@ export function SurpriseEditor({ id, onBack, onExpired }: Props) {
         </div>
       </Block>
 
-      {savedId ? <SharePanel id={savedId} title={title} /> : (
+      {savedId ? <SharePanel id={savedId} title={title} onRegenerate={regenerate} canRegenerate={!dirty} /> : (
         <p className="px-2 text-center text-sm" style={{ color: 'var(--muted)' }}>Save once to get a link and QR code you can send.</p>
       )}
 
